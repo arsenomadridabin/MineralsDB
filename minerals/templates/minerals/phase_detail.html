@@ -1,0 +1,262 @@
+{% extends "minerals/base.html" %}
+
+{% block title %}{{ phase.name }} — Mantle Minerals DB{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'phase_list' %}">Phases</a></li>
+        <li class="breadcrumb-item active">{{ phase.name }}</li>
+    </ol>
+</nav>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h1>{{ phase.name }}</h1>
+        <p class="lead">{{ phase.formula }}</p>
+        <p>
+            <span class="badge bg-secondary">{{ phase.mineral_group }}</span>
+            <span class="badge bg-info text-dark">{{ phase.get_phase_type_display }}</span>
+        </p>
+        {% if phase.aliases %}
+        <p><strong>Aliases:</strong> {{ phase.aliases|join:", " }}</p>
+        {% endif %}
+        {% if phase.description %}
+        <p>{{ phase.description }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<h2 class="h4 section-title">Literature Sources</h2>
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-striped">
+        <thead><tr><th>Year</th><th>Title</th><th>Journal</th><th>DOI</th></tr></thead>
+        <tbody>
+            {% for source in sources %}
+            <tr>
+                <td>{{ source.year }}</td>
+                <td><a href="{% url 'source_detail' source.pk %}">{{ source.title|truncatechars:60 }}</a></td>
+                <td>{{ source.journal }}</td>
+                <td>{% if source.doi %}<a href="https://doi.org/{{ source.doi }}" target="_blank">{{ source.doi }}</a>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-muted">No sources linked.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2 class="h4 section-title">Crystal Structures</h2>
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Space Group</th><th>System</th><th>a</th><th>b</th><th>c</th>
+                <th>Volume</th><th>P (GPa)</th><th>T (K)</th><th>Method</th><th>Source</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cs in crystal_structures %}
+            <tr>
+                <td>{{ cs.space_group }}</td>
+                <td>{{ cs.crystal_system }}</td>
+                <td>{{ cs.lattice_a|default:"—" }}</td>
+                <td>{{ cs.lattice_b|default:"—" }}</td>
+                <td>{{ cs.lattice_c|default:"—" }}</td>
+                <td>{{ cs.volume|default:"—" }}</td>
+                <td>{{ cs.pressure|default:"—" }}</td>
+                <td>{{ cs.temperature|default:"—" }}</td>
+                <td>{{ cs.method }}</td>
+                <td><a href="{% url 'source_detail' cs.source.pk %}">{{ cs.source.year }}</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="10" class="text-muted">No crystal structure data.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2 class="h4 section-title">EOS Entries</h2>
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr><th>Model</th><th>T (K)</th><th>P range</th><th>V range</th><th>Method</th><th>Source</th></tr>
+        </thead>
+        <tbody>
+            {% for eos in eos_entries %}
+            <tr>
+                <td>{{ eos.eos_model }}</td>
+                <td>{{ eos.temperature|default:"—" }}</td>
+                <td>{{ eos.pressure_min|default:"—" }} – {{ eos.pressure_max|default:"—" }} GPa</td>
+                <td>{{ eos.volume_min|default:"—" }} – {{ eos.volume_max|default:"—" }} Å³</td>
+                <td>{{ eos.method }}</td>
+                <td><a href="{% url 'source_detail' eos.source.pk %}">{{ eos.source.year }}</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-muted">No EOS entries.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2 class="h4 section-title">EOS Parameters (by entry)</h2>
+{% for eos in eos_entries %}
+<div class="card mb-3">
+    <div class="card-header">{{ eos.eos_model }}{% if eos.temperature %} @ {{ eos.temperature }} K{% endif %}</div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Parameter</th><th>Value</th><th>Unit</th><th>Uncertainty</th></tr></thead>
+            <tbody>
+                {% for param in eos.parameters.all %}
+                <tr>
+                    <td>{{ param.name }}</td>
+                    <td>{{ param.value|default:"—" }}</td>
+                    <td>{{ param.unit }}</td>
+                    <td>{{ param.uncertainty|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-muted">No parameters.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% empty %}
+<p class="text-muted">No EOS parameters.</p>
+{% endfor %}
+
+<h2 class="h4 section-title">PV Data</h2>
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div id="pv-plot" class="plot-container"></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-sm table-striped">
+                <thead><tr><th>EOS</th><th>P</th><th>V</th><th>T</th></tr></thead>
+                <tbody>
+                    {% for pt in pv_data %}
+                    <tr>
+                        <td>{{ pt.eos_entry.eos_model }}</td>
+                        <td>{{ pt.pressure }} {{ pt.pressure_unit }}</td>
+                        <td>{{ pt.volume }} {{ pt.volume_unit }}</td>
+                        <td>{{ pt.temperature|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-muted">No PV data.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<h2 class="h4 section-title">EV Data</h2>
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div id="ev-plot" class="plot-container"></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-sm table-striped">
+                <thead><tr><th>EOS</th><th>Energy</th><th>Volume</th></tr></thead>
+                <tbody>
+                    {% for pt in ev_data %}
+                    <tr>
+                        <td>{{ pt.eos_entry.eos_model }}</td>
+                        <td>{{ pt.energy }} {{ pt.energy_unit }}</td>
+                        <td>{{ pt.volume }} {{ pt.volume_unit }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-muted">No EV data.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<h2 class="h4 section-title">Elastic / Seismic Properties</h2>
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>P</th><th>T</th><th>ρ</th><th>K</th><th>G</th><th>Vp</th><th>Vs</th><th>Method</th><th>Source</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for em in elastic_measurements %}
+            <tr>
+                <td>{{ em.pressure|default:"—" }} {{ em.pressure_unit }}</td>
+                <td>{{ em.temperature|default:"—" }} {{ em.temperature_unit }}</td>
+                <td>{{ em.density|default:"—" }} {{ em.density_unit }}</td>
+                <td>{{ em.bulk_modulus|default:"—" }} {{ em.modulus_unit }}</td>
+                <td>{{ em.shear_modulus|default:"—" }} {{ em.modulus_unit }}</td>
+                <td>{{ em.vp|default:"—" }} {{ em.velocity_unit }}</td>
+                <td>{{ em.vs|default:"—" }} {{ em.velocity_unit }}</td>
+                <td>{{ em.method }}</td>
+                <td><a href="{% url 'source_detail' em.source.pk %}">{{ em.source.year }}</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9" class="text-muted">No elastic measurements.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const pvSeries = {{ pv_json|safe }};
+    const evSeries = {{ ev_json|safe }};
+
+    if (pvSeries.length) {
+        const pvTraces = pvSeries.map(s => ({
+            x: s.points.map(p => p.pressure),
+            y: s.points.map(p => p.volume),
+            mode: 'lines+markers',
+            name: s.label,
+            marker: { size: 6 },
+        }));
+        const pvUnit = pvSeries[0].pressure_unit || 'GPa';
+        const vUnit = pvSeries[0].volume_unit || 'Å³';
+        Plotly.newPlot('pv-plot', pvTraces, {
+            title: 'Pressure–Volume',
+            xaxis: { title: `Pressure (${pvUnit})` },
+            yaxis: { title: `Volume (${vUnit})` },
+            legend: { orientation: 'h', y: -0.2 },
+            margin: { t: 40, b: 80 },
+        }, { responsive: true });
+    } else {
+        document.getElementById('pv-plot').innerHTML = '<p class="text-muted p-3">No PV data available for plotting.</p>';
+    }
+
+    if (evSeries.length) {
+        const evTraces = evSeries.map(s => ({
+            x: s.points.map(p => p.volume),
+            y: s.points.map(p => p.energy),
+            mode: 'lines+markers',
+            name: s.label,
+            marker: { size: 6 },
+        }));
+        const eUnit = evSeries[0].energy_unit || 'eV/atom';
+        const vUnit = evSeries[0].volume_unit || 'Å³';
+        Plotly.newPlot('ev-plot', evTraces, {
+            title: 'Energy–Volume',
+            xaxis: { title: `Volume (${vUnit})` },
+            yaxis: { title: `Energy (${eUnit})` },
+            legend: { orientation: 'h', y: -0.2 },
+            margin: { t: 40, b: 80 },
+        }, { responsive: true });
+    } else {
+        document.getElementById('ev-plot').innerHTML = '<p class="text-muted p-3">No EV data available for plotting.</p>';
+    }
+})();
+</script>
+{% endblock %}

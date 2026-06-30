@@ -1,0 +1,9 @@
+media/
+uploads/
+extraction_uploads/
+cif_files/
+venv/
+db.sqlite3
+__pycache__/
+*.pyc
+.env

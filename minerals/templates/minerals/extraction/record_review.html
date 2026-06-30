@@ -1,0 +1,62 @@
+{% extends "minerals/base.html" %}
+
+{% block title %}Review Record #{{ record.pk }} — Mantle Minerals DB{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'extraction_job_detail' record.extraction_job_id %}">Job #{{ record.extraction_job_id }}</a></li>
+        <li class="breadcrumb-item active">Record #{{ record.pk }}</li>
+    </ol>
+</nav>
+
+<h1 class="mb-3">Review Extracted Record</h1>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">Metadata</div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>Target model:</strong> {{ record.target_model }}</li>
+                <li class="list-group-item"><strong>Validation:</strong> {{ record.validation_status }}</li>
+                <li class="list-group-item"><strong>Review status:</strong> {{ record.reviewer_status }}</li>
+                <li class="list-group-item"><strong>Confidence:</strong> {{ record.confidence|default:"—" }}</li>
+                <li class="list-group-item"><strong>Page:</strong> {{ record.page_number|default:"—" }}</li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">Evidence</div>
+            <div class="card-body"><pre class="mb-0">{{ record.evidence_text }}</pre></div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Extracted JSON</div>
+    <div class="card-body">
+        <pre>{{ record_json }}</pre>
+    </div>
+</div>
+
+{% if record.reviewer_notes %}
+<div class="alert alert-warning">{{ record.reviewer_notes }}</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-success">Submit Review</button>
+            <a href="{% url 'extraction_job_detail' record.extraction_job_id %}" class="btn btn-outline-secondary">Back</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends "minerals/base.html" %}
+
+{% block title %}{{ source.title|truncatechars:50 }} — Mantle Minerals DB{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item active">Source</li>
+    </ol>
+</nav>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h1>{{ source.title }}</h1>
+        <p><strong>Authors:</strong> {{ source.authors|join:", " }}</p>
+        <p><strong>Journal:</strong> {{ source.journal }} ({{ source.year }})</p>
+        {% if source.doi %}
+        <p><strong>DOI:</strong> <a href="https://doi.org/{{ source.doi }}" target="_blank">{{ source.doi }}</a></p>
+        {% endif %}
+        {% if source.url %}
+        <p><strong>URL:</strong> <a href="{{ source.url }}" target="_blank">{{ source.url }}</a></p>
+        {% endif %}
+        <p><strong>Type:</strong> {{ source.get_source_type_display }}</p>
+    </div>
+</div>
+
+<h2 class="h4 section-title">Associated Phases</h2>
+<div class="mb-4">
+    {% for phase in phases %}
+    <a href="{% url 'phase_detail' phase.pk %}" class="badge bg-primary text-decoration-none me-1 mb-1">{{ phase.name }}</a>
+    {% empty %}
+    <p class="text-muted">No phases linked.</p>
+    {% endfor %}
+</div>
+
+<h2 class="h4 section-title">Crystal Structures</h2>
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-striped">
+        <thead><tr><th>Phase</th><th>Space Group</th><th>System</th><th>P</th><th>T</th><th>Method</th></tr></thead>
+        <tbody>
+            {% for cs in crystal_structures %}
+            <tr>
+                <td><a href="{% url 'phase_detail' cs.phase.pk %}">{{ cs.phase.name }}</a></td>
+                <td>{{ cs.space_group }}</td>
+                <td>{{ cs.crystal_system }}</td>
+                <td>{{ cs.pressure|default:"—" }}</td>
+                <td>{{ cs.temperature|default:"—" }}</td>
+                <td>{{ cs.method }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-muted">None.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2 class="h4 section-title">EOS Entries</h2>
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-striped">
+        <thead><tr><th>Phase</th><th>Model</th><th>T (K)</th><th>Method</th><th>Parameters</th></tr></thead>
+        <tbody>
+            {% for eos in eos_entries %}
+            <tr>
+                <td><a href="{% url 'phase_detail' eos.phase.pk %}">{{ eos.phase.name }}</a></td>
+                <td>{{ eos.eos_model }}</td>
+                <td>{{ eos.temperature|default:"—" }}</td>
+                <td>{{ eos.method }}</td>
+                <td>
+                    {% for p in eos.parameters.all %}
+                    {{ p.name }}={{ p.value }}{% if p.unit %} {{ p.unit }}{% endif %}{% if not forloop.last %}; {% endif %}
+                    {% empty %}—{% endfor %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-muted">None.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2 class="h4 section-title">PV Data</h2>
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-striped">
+        <thead><tr><th>Phase</th><th>EOS</th><th>P</th><th>V</th><th>T</th></tr></thead>
+        <tbody>
+            {% for pt in pv_data %}
+            <tr>
+                <td>{{ pt.eos_entry.phase.name }}</td>
+                <td>{{ pt.eos_entry.eos_model }}</td>
+                <td>{{ pt.pressure }} {{ pt.pressure_unit }}</td>
+                <td>{{ pt.volume }} {{ pt.volume_unit }}</td>
+                <td>{{ pt.temperature|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-muted">None.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2 class="h4 section-title">EV Data</h2>
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-striped">
+        <thead><tr><th>Phase</th><th>EOS</th><th>Energy</th><th>Volume</th></tr></thead>
+        <tbody>
+            {% for pt in ev_data %}
+            <tr>
+                <td>{{ pt.eos_entry.phase.name }}</td>
+                <td>{{ pt.eos_entry.eos_model }}</td>
+                <td>{{ pt.energy }} {{ pt.energy_unit }}</td>
+                <td>{{ pt.volume }} {{ pt.volume_unit }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-muted">None.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2 class="h4 section-title">Elastic Measurements</h2>
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-striped">
+        <thead><tr><th>Phase</th><th>P</th><th>T</th><th>K</th><th>G</th><th>Vp</th><th>Vs</th><th>Method</th></tr></thead>
+        <tbody>
+            {% for em in elastic_measurements %}
+            <tr>
+                <td><a href="{% url 'phase_detail' em.phase.pk %}">{{ em.phase.name }}</a></td>
+                <td>{{ em.pressure|default:"—" }}</td>
+                <td>{{ em.temperature|default:"—" }}</td>
+                <td>{{ em.bulk_modulus|default:"—" }}</td>
+                <td>{{ em.shear_modulus|default:"—" }}</td>
+                <td>{{ em.vp|default:"—" }}</td>
+                <td>{{ em.vs|default:"—" }}</td>
+                <td>{{ em.method }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-muted">None.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

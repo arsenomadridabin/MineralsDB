@@ -1,0 +1,41 @@
+{% extends "minerals/base.html" %}
+
+{% block title %}Extraction Jobs — Mantle Minerals DB{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Extraction Jobs</h1>
+<p><a href="{% url 'extraction_upload' %}" class="btn btn-primary mb-3">New Upload</a></p>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th><th>Status</th><th>Model</th><th>Prompt</th><th>Created</th><th>Completed</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>{{ job.pk }}</td>
+                <td><span class="badge bg-{% if job.status == 'completed' %}success{% elif job.status == 'failed' %}danger{% else %}secondary{% endif %}">{{ job.status }}</span></td>
+                <td>{{ job.model_name }}</td>
+                <td>{{ job.prompt_version }}</td>
+                <td>{{ job.created_at|date:"Y-m-d H:i" }}</td>
+                <td>{{ job.completed_at|date:"Y-m-d H:i"|default:"—" }}</td>
+                <td><a href="{% url 'extraction_job_detail' job.pk %}">Review</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-muted">No extraction jobs yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if is_paginated %}
+<nav><ul class="pagination">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>{% endif %}
+    <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>{% endif %}
+</ul></nav>
+{% endif %}
+{% endblock %}

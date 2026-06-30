@@ -1,0 +1,106 @@
+:root {
+    --mantle-primary: #1a3a5c;
+    --mantle-accent: #2d6a9f;
+    --mantle-light: #f0f4f8;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--mantle-light);
+}
+
+main {
+    flex: 1;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, var(--mantle-primary), var(--mantle-accent));
+    color: #fff;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.phase-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.phase-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.section-title {
+    border-bottom: 2px solid var(--mantle-accent);
+    padding-bottom: 0.4rem;
+    margin-bottom: 1rem;
+    color: var(--mantle-primary);
+}
+
+.data-table th {
+    background-color: var(--mantle-primary);
+    color: #fff;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.plot-container {
+    min-height: 380px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.form-control,
+.form-select {
+    border-radius: 6px;
+}
+
+pre {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    overflow-x: auto;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+.breadcrumb {
+    background: transparent;
+    padding-left: 0;
+}
+
+input[type="text"],
+input[type="search"],
+input[type="number"],
+input[type="file"],
+textarea,
+select {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}

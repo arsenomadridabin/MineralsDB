@@ -1,0 +1,47 @@
+{% extends "minerals/base.html" %}
+
+{% block title %}Extraction Job #{{ job.pk }} — Mantle Minerals DB{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'extraction_job_list' %}">Jobs</a></li>
+        <li class="breadcrumb-item active">Job #{{ job.pk }}</li>
+    </ol>
+</nav>
+
+<h1 class="mb-3">Extraction Job #{{ job.pk }}</h1>
+<p>
+    <span class="badge bg-{% if job.status == 'completed' %}success{% elif job.status == 'failed' %}danger{% else %}secondary{% endif %}">{{ job.status }}</span>
+    Model: {{ job.model_name }} | Prompt: {{ job.prompt_version }}
+</p>
+{% if job.notes %}<p class="text-muted">{{ job.notes }}</p>{% endif %}
+
+<h2 class="h5 mt-4">Extracted Records</h2>
+<div class="table-responsive">
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>ID</th><th>Target</th><th>Validation</th><th>Review</th>
+                <th>Confidence</th><th>Page</th><th>Preview</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+            <tr>
+                <td>{{ record.pk }}</td>
+                <td>{{ record.target_model }}</td>
+                <td><span class="badge bg-{% if record.validation_status == 'valid' %}success{% elif record.validation_status == 'invalid' %}danger{% else %}secondary{% endif %}">{{ record.validation_status }}</span></td>
+                <td><span class="badge bg-{% if record.reviewer_status == 'approved' %}success{% elif record.reviewer_status == 'rejected' %}danger{% else %}warning text-dark{% endif %}">{{ record.reviewer_status }}</span></td>
+                <td>{{ record.confidence|default:"—" }}</td>
+                <td>{{ record.page_number|default:"—" }}</td>
+                <td><code>{{ record.extracted_json|truncatechars:60 }}</code></td>
+                <td><a href="{% url 'record_review' record.pk %}">Review</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-muted">No records extracted.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
